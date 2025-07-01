@@ -42,11 +42,13 @@ jobs:
           echo "✅ APK downloaded! Size: $FILE_SIZE bytes"
 
       - name: Create Git Tag
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          git config --local user.email "pritamkarmakar849@gmail.com"
-          git config --local user.name "Pritam Karmakar"
-          git tag -a "${{ github.event.inputs.version }}" -m "Release ${{ github.event.inputs.version }}"
-          git push origin "${{ github.event.inputs.version }}"
+           git config --local user.email "pritamkarmakar849@gmail.com"
+            git config --local user.name "Pritam Karmakar"
+            git tag -a "${{ github.event.inputs.version }}" -m "Release ${{ github.event.inputs.version }}"
+            git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git "${{ github.event.inputs.version }}"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
