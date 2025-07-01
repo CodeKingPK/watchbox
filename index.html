@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WatchBox - Download APK</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2e92fc 0%, #5856D6 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 600px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: white;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .feature {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feature-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            background: white;
+            color: #2e92fc;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 20px 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        
+        .github-btn {
+            background: #24292e;
+            color: white;
+        }
+        
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 12px;
+            margin: 40px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .instructions h3 {
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        
+        .instructions ol {
+            text-align: left;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-icon">🎬</div>
+        
+        <h1>Movie Watchlist</h1>
+        <p class="subtitle">
+            Professional movie discovery and watchlist management app.<br>
+            Built with React Native & Expo by Pritam Karmakar.
+        </p>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🔥</div>
+                <h4>Trending Movies</h4>
+                <p>Discover daily trending films</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔍</div>
+                <h4>Smart Search</h4>
+                <p>Real-time search with suggestions</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📚</div>
+                <h4>Personal Watchlist</h4>
+                <p>Save and manage your movie list</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎥</div>
+                <h4>In-App Trailers</h4>
+                <p>Watch trailers without leaving the app</p>
+            </div>
+        </div>
+        
+        <a href="https://github.com/yourusername/movie-watchlist/releases/latest" class="download-btn">
+            📱 Download APK
+        </a>
+        <a href="https://github.com/yourusername/movie-watchlist" class="download-btn github-btn">
+            💻 View Source Code
+        </a>
+        
+        <div class="instructions">
+            <h3>📋 Installation Instructions</h3>
+            <ol>
+                <li>Download the APK file using the button above</li>
+                <li>Enable "Install from Unknown Sources" in Android settings</li>
+                <li>Install the APK on your Android device</li>
+                <li>Get a free TMDB API key from <a href="https://themoviedb.org" style="color: #fff;">themoviedb.org</a></li>
+                <li>Add your API key in the app to start discovering movies!</li>
+            </ol>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 Pritam Karmakar. Built with ❤️ using React Native & Expo.</p>
+            <p>Powered by The Movie Database (TMDB) API</p>
+        </div>
+    </div>
+</body>
+</html>

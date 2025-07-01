@@ -1,0 +1,129 @@
+name: Build and Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Expo CLI
+        run: npm install -g @expo/cli
+
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Create Expo account and login
+        run: |
+          echo "Please set up your Expo account manually and add EXPO_TOKEN to repository secrets"
+          # eas login --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Configure EAS build
+        run: |
+          cat > eas.json << EOF
+          {
+            "cli": {
+              "version": ">= 5.4.0"
+            },
+            "build": {
+              "development": {
+                "distribution": "internal",
+                "android": {
+                  "gradleCommand": ":app:assembleDebug"
+                }
+              },
+              "preview": {
+                "distribution": "internal",
+                "android": {
+                  "buildType": "apk"
+                }
+              },
+              "production": {
+                "android": {
+                  "buildType": "apk"
+                }
+              }
+            },
+            "submit": {
+              "production": {}
+            }
+          }
+          EOF
+
+      - name: Build APK
+        run: eas build --platform android --profile production --local --output ./build/
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: watchbox-apk
+          path: ./build/*.apk
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./build/*.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          name: Movie Watchlist ${{ github.ref_name }}
+          body: |
+            # 🎬 Movie Watchlist ${{ github.ref_name }}
+            
+            ## 📱 Download APK
+            Download the APK file below to install on your Android device.
+            
+            ## ✨ Features
+            - 🏠 Discover trending, popular, and top-rated movies
+            - 🔍 Smart search with real-time suggestions
+            - 📚 Personal watchlist with local storage
+            - 🎥 In-app trailer playback
+            - 🎨 Professional dark theme design
+            - 🎯 Browse movies by genre
+            - 📊 Movie details with cast, reviews, and more
+            
+            ## 🔧 Installation
+            1. Download the APK file from the assets below
+            2. Enable "Install from Unknown Sources" in your Android settings
+            3. Install the APK
+            4. Get your free TMDB API key from themoviedb.org
+            5. Add your API key to the app settings
+            
+            ## 📋 What's New
+            ${{ github.event.head_commit.message }}
+            
+            ---
+            **Developed by Pritam Karmakar © 2025**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

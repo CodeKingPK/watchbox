@@ -1,29 +1,51 @@
 {
   "expo": {
-    "name": "movie-watchlist",
-    "slug": "movie-watchlist",
+    "name": "WatchBox",
+    "slug": "watchbox-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "description": "Professional movie discovery and watchlist management app",
+    "keywords": [
+      "movies",
+      "watchlist",
+      "tmdb",
+      "entertainment",
+      "film"
+    ],
+    "privacy": "public",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0A0A0A"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pritamkarmakar.moviewatchlist"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0A0A0A"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.pritamkarmakar.moviewatchlist",
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "INTERNET"
+      ],
+      "versionCode": 1
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a3460e69-b60c-432e-a7f2-36980aea3f5e"
+      }
+    },
+    "owner": "pritamouli"
   }
 }
