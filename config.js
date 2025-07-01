@@ -6,7 +6,7 @@ export const CONFIG = {
   // 3. Go to Settings > API > Create > Developer
   // 4. Fill out the form and get your API key
   // 5. Replace YOUR_API_KEY_HERE with your actual key
-  TMDB_API_KEY: '6a7aebbd18b1cfc71ab61585b47bbf74', // This is already set with your key!
+  TMDB_API_KEY:'apikey', // This is already set with your key!
   
   // TMDB API endpoints
   TMDB_BASE_URL: 'https://api.themoviedb.org/3',
