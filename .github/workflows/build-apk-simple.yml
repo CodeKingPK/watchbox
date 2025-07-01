@@ -1,0 +1,171 @@
+name: Build and Release APK (Simple)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Expo CLI
+        run: npm install -g @expo/cli
+
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Verify Expo Authentication
+        run: |
+          echo "Verifying Expo authentication..."
+          eas whoami
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit Build
+        run: |
+          echo "Submitting build to EAS..."
+          eas build --platform android --profile production --non-interactive
+          echo "Build submitted successfully!"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Monitor Build Status
+        run: |
+          echo "Monitoring build status..."
+          
+          # Wait a bit for the build to be registered
+          sleep 30
+          
+          # Check build status periodically
+          for i in {1..30}; do
+            echo "Checking build status (attempt $i/30)..."
+            
+            BUILD_INFO=$(eas build:list --platform android --limit 1 --json 2>/dev/null || echo "[]")
+            
+            if [ "$BUILD_INFO" != "[]" ]; then
+              BUILD_STATUS=$(echo "$BUILD_INFO" | jq -r '.[0].status')
+              BUILD_ID=$(echo "$BUILD_INFO" | jq -r '.[0].id')
+              
+              echo "Build ID: $BUILD_ID, Status: $BUILD_STATUS"
+              
+              case "$BUILD_STATUS" in
+                "finished")
+                  echo "✅ Build completed successfully!"
+                  echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+                  exit 0
+                  ;;
+                "errored"|"canceled")
+                  echo "❌ Build failed with status: $BUILD_STATUS"
+                  exit 1
+                  ;;
+                "in-queue"|"in-progress")
+                  echo "⏳ Build is $BUILD_STATUS, waiting..."
+                  ;;
+                *)
+                  echo "🔍 Unknown status: $BUILD_STATUS"
+                  ;;
+              esac
+            else
+              echo "📝 No builds found yet, waiting..."
+            fi
+            
+            # Wait 2 minutes before next check
+            sleep 120
+          done
+          
+          echo "⏰ Build timeout after 60 minutes"
+          exit 1
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Download APK
+        run: |
+          echo "Downloading APK..."
+          mkdir -p ./build
+          
+          # Get the latest finished build
+          BUILD_INFO=$(eas build:list --platform android --status finished --limit 1 --json)
+          DOWNLOAD_URL=$(echo "$BUILD_INFO" | jq -r '.[0].artifacts.buildUrl')
+          
+          if [ "$DOWNLOAD_URL" = "null" ] || [ -z "$DOWNLOAD_URL" ]; then
+            echo "❌ No download URL found"
+            exit 1
+          fi
+          
+          echo "📥 Downloading from: $DOWNLOAD_URL"
+          curl -L -o "./build/watchbox-android.apk" "$DOWNLOAD_URL"
+          
+          if [ ! -f "./build/watchbox-android.apk" ]; then
+            echo "❌ Download failed"
+            exit 1
+          fi
+          
+          FILE_SIZE=$(stat -c%s "./build/watchbox-android.apk")
+          echo "✅ APK downloaded! Size: $FILE_SIZE bytes"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: watchbox-apk
+          path: ./build/*.apk
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./build/*.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          name: WatchBox ${{ github.ref_name }}
+          body: |
+            # 🎬 WatchBox ${{ github.ref_name }}
+            
+            ## 📱 Download APK
+            Download the APK file below to install on your Android device.
+            
+            ## ✨ Features
+            - 🎬 Discover trending, popular, and top-rated movies
+            - 🔍 Smart search with real-time suggestions  
+            - 📚 Personal watchlist with local storage
+            - 🎥 In-app trailer playback with WebView
+            - 🎨 Professional dark theme design
+            - 🎯 Browse movies by genre (Action, Comedy, Horror)
+            - 📊 Detailed movie information with cast, reviews, and similar movies
+            - 💫 Skeleton loading animations throughout
+            - 📱 Compact, mobile-optimized interface
+            
+            ## 🔧 Installation
+            1. Download the APK file from the assets below
+            2. Enable "Install from Unknown Sources" in your Android settings
+            3. Install the APK
+            4. The app includes a working TMDB API key - ready to use!
+            
+            ## 📋 What's New in this Release
+            - Enhanced compact UI design for better mobile experience
+            - Improved skeleton loading animations
+            - More comprehensive movie details page
+            - GitHub Actions automated build and release system
+            
+            ---
+            **Developed by Pritam Karmakar © 2025**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
