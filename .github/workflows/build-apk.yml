@@ -30,6 +30,9 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install jq for JSON parsing
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Install dependencies
         run: npm ci
 
@@ -39,10 +42,8 @@ jobs:
       - name: Setup EAS CLI
         run: npm install -g eas-cli
 
-      - name: Create Expo account and login
-        run: |
-          echo "Please set up your Expo account manually and add EXPO_TOKEN to repository secrets"
-          # eas login --non-interactive
+      - name: Authenticate with Expo
+        run: eas login --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
@@ -51,7 +52,8 @@ jobs:
           cat > eas.json << EOF
           {
             "cli": {
-              "version": ">= 5.4.0"
+              "version": ">= 5.4.0",
+              "appVersionSource": "remote"
             },
             "build": {
               "development": {
@@ -69,6 +71,9 @@ jobs:
               "production": {
                 "android": {
                   "buildType": "apk"
+                },
+                "env": {
+                  "EXPO_NO_CAPABILITY_SYNC": "1"
                 }
               }
             },
@@ -78,10 +83,89 @@ jobs:
           }
           EOF
 
-      - name: Build APK
-        run: eas build --platform android --profile production --local --output ./build/
+      - name: Generate Android Keystore
+        run: |
+          echo "Generating Android Keystore for signing..."
+          eas credentials:configure --platform android --profile production --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build APK
+        id: build_apk
+        run: |
+          echo "Starting EAS build..."
+          
+          # Try remote build first
+          if eas build --platform android --profile production --non-interactive --wait; then
+            echo "Remote build completed successfully"
+            echo "build_type=remote" >> $GITHUB_OUTPUT
+          else
+            echo "Remote build failed, falling back to local build..."
+            echo "build_type=local" >> $GITHUB_OUTPUT
+            
+            # Install EAS Build tools for local builds
+            npm install -g @expo/eas-build-job@latest
+            
+            # Create build directory
+            mkdir -p ./build
+            
+            # Run local build
+            eas build --platform android --profile production --local --output ./build/
+          fi
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Download APK (Remote Build)
+        if: steps.build_apk.outputs.build_type == 'remote'
+        run: |
+          echo "Downloading built APK from remote build..."
+          mkdir -p ./build
+          
+          echo "Getting latest build info..."
+          eas build:list --platform android --status finished --limit 1 --json > build_info.json
+          
+          # Debug: Show build info
+          echo "Build info:"
+          cat build_info.json | jq '.'
+          
+          # Extract download URL from the build info
+          DOWNLOAD_URL=$(cat build_info.json | jq -r '.[0].artifacts.buildUrl')
+          BUILD_ID=$(cat build_info.json | jq -r '.[0].id')
+          
+          echo "Download URL: $DOWNLOAD_URL"
+          echo "Build ID: $BUILD_ID"
+          
+          # Check if we have a valid download URL
+          if [ "$DOWNLOAD_URL" = "null" ] || [ -z "$DOWNLOAD_URL" ]; then
+            echo "Error: No download URL found. Build may have failed."
+            echo "Full build info:"
+            cat build_info.json
+            exit 1
+          fi
+          
+          # Download the APK
+          echo "Downloading APK from: $DOWNLOAD_URL"
+          curl -L -H "Authorization: Bearer $EXPO_TOKEN" -o "./build/watchbox-android.apk" "$DOWNLOAD_URL"
+          
+          # Check if download was successful
+          if [ ! -f "./build/watchbox-android.apk" ]; then
+            echo "Error: APK download failed"
+            exit 1
+          fi
+          
+          echo "APK downloaded successfully!"
+          ls -la ./build/
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Prepare APK (Local Build)
+        if: steps.build_apk.outputs.build_type == 'local'
+        run: |
+          echo "Preparing APK from local build..."
+          # Find the APK file and rename it
+          find ./build -name "*.apk" -type f -exec mv {} ./build/watchbox-android.apk \;
+          echo "APK prepared successfully!"
+          ls -la ./build/
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

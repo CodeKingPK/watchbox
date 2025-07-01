@@ -35,7 +35,8 @@
       "permissions": [
         "INTERNET"
       ],
-      "versionCode": 1
+      "versionCode": 1,
+      "buildEnvironment": "node-16"
     },
     "web": {
       "favicon": "./assets/favicon.png",
