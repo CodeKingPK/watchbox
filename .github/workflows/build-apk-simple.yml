@@ -40,7 +40,7 @@ jobs:
       - name: Submit Build
         run: |
           echo "Submitting build to EAS..."
-          eas build --platform android --profile production --non-interactive
+          eas build --platform android --profile production
           echo "Build submitted successfully!"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
