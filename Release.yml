@@ -1,0 +1,95 @@
+name: Manual APK Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.1)'
+        required: true
+        default: 'v1.0.1'
+      apk_url:
+        description: 'EAS Build APK Download URL'
+        required: true
+      release_notes:
+        description: 'Release notes (optional)'
+        required: false
+        default: 'Manual release build'
+
+jobs:
+  release:
+    name: Create Manual Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download APK from EAS
+        run: |
+          echo "📥 Downloading APK from EAS..."
+          mkdir -p ./build
+          
+          # Download APK from the provided URL
+          curl -L -o "./build/watchbox-${{ github.event.inputs.version }}.apk" "${{ github.event.inputs.apk_url }}"
+          
+          # Verify download
+          if [ ! -f "./build/watchbox-${{ github.event.inputs.version }}.apk" ]; then
+            echo "❌ Download failed"
+            exit 1
+          fi
+          
+          FILE_SIZE=$(stat -c%s "./build/watchbox-${{ github.event.inputs.version }}.apk")
+          echo "✅ APK downloaded! Size: $FILE_SIZE bytes"
+
+      - name: Create Git Tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "${{ github.event.inputs.version }}" -m "Release ${{ github.event.inputs.version }}"
+          git push origin "${{ github.event.inputs.version }}"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          files: ./build/*.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          name: WatchBox ${{ github.event.inputs.version }}
+          body: |
+            # 🎬 WatchBox ${{ github.event.inputs.version }}
+            
+            ## 📱 Download APK
+            Download the APK file below to install on your Android device.
+            
+            ## 📋 Release Notes
+            ${{ github.event.inputs.release_notes }}
+            
+            ## ✨ Features
+            - 🎬 Discover trending, popular, and top-rated movies
+            - 🔍 Smart search with real-time suggestions  
+            - 📚 Personal watchlist with local storage
+            - 🎥 In-app trailer playback with WebView
+            - 🎨 Professional dark theme design
+            - 🎯 Browse movies by genre (Action, Comedy, Horror)
+            - 📊 Detailed movie information with cast, reviews, and similar movies
+            - 💫 Skeleton loading animations throughout
+            - 📱 Compact, mobile-optimized interface
+            
+            ## 🔧 Installation
+            1. Download the APK file from the assets below
+            2. Enable "Install from Unknown Sources" in your Android settings
+            3. Install the APK
+            4. The app includes a working TMDB API key - ready to use!
+            
+            ---
+            **Developed by Pritam Karmakar © 2025**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: watchbox-manual-${{ github.event.inputs.version }}
+          path: ./build/*.apk
