@@ -43,8 +43,8 @@ jobs:
 
       - name: Create Git Tag
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "pritamkarmakar849@gmail.com"
+          git config --local user.name "Pritam Karmakar"
           git tag -a "${{ github.event.inputs.version }}" -m "Release ${{ github.event.inputs.version }}"
           git push origin "${{ github.event.inputs.version }}"
 
